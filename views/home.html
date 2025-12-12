@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build with Decency</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- 1. SHARED VARIABLES (From Source) --- */
+        :root {
+            --bg-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --primary-color: #4d60fb;
+            --accent-color: #00ffcc;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --font-stack: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* --- 2. CORE LAYOUT --- */
+        body {
+            margin: 0;
+            font-family: var(--font-stack);
+            color: var(--text-main);
+            overflow-x: hidden;
+            background-color: var(--bg-color);
+            cursor: default;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* --- 3. PORTFOLIO STYLING --- */
+        header {
+            background: rgba(10, 10, 10, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 500;
+            transition: 0.3s;
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-color);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 120px 20px;
+            position: relative;
+        }
+
+        .hero h2 {
+            font-size: 60px;
+            margin: 0 0 20px;
+            text-shadow: 0 0 30px rgba(77, 96, 251, 0.4); /* Added slight indigo glow */
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .hero button {
+            background: white;
+            color: black;
+            border: none;
+            padding: 15px 35px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .hero button:hover {
+            transform: scale(1.05);
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        .cards {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 80px auto;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            width: 300px;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            transition: 0.3s;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            background: rgba(77, 96, 251, 0.1); /* Indigo tint on hover */
+            border-color: var(--accent-color);
+        }
+
+        .card h3 {
+            color: #fff;
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        footer {
+            background: rgba(5, 5, 5, 0.95);
+            color: #888;
+            text-align: center;
+            padding: 60px 20px;
+            margin-top: 100px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .philosophy {
+            font-size: 1rem;
+            font-style: italic;
+            line-height: 1.6;
+            color: #ccc;
+            margin-bottom: 30px;
+            font-weight: 300;
+            border-left: 3px solid var(--accent-color);
+            padding-left: 20px;
+            display: inline-block;
+            text-align: left;
+        }
+
+        .separator {
+            width: 50px;
+            height: 2px;
+            background: var(--primary-color);
+            margin: 0 auto 30px auto;
+            opacity: 0.5;
+        }
+
+        .copyright {
+            font-size: 0.85rem;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Background Canvas Container -->
+    <div id="bg-canvas"></div>
+
+    <header>
+        <h1>Decent Engineer</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+            <a href="/logout">LogOut</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h2>Hi, I'm Devyani 👋</h2>
+        <p>A passionate problem solver building modern, interactive, and intelligent web applications.</p>
+        <a href="/resume" style="text-decoration: none;">
+            <button>View Resume</button>
+        </a>
+    </section>
+
+    <section class="cards">
+        <div class="card">
+            <h3>🧠 AI DSA Recommender</h3>
+            <p>Architected a microservices backend processing 2,500+ problems into 384-dimension vectors for semantic user profiling.</p>
+        </div>
+
+        <div class="card">
+            <h3>👁️ MynVision Analytics</h3>
+            <p>ML-based fashion trend forecaster tracking 1,000+ daily interactions to generate personalized 'Outfit of the Day' insights.</p>
+        </div>
+
+        <div class="card">
+            <h3>♻️ ReNova Eco-System</h3>
+            <p>Sustainable e-commerce solution with a Smart Return Assistant designed to reduce inventory losses by up to 30%.</p>
+        </div>
+
+        <div class="card">
+            <h3>🏆 Algorithmic Mastery</h3>
+            <p>LeetCode Knight (Top 25%), National Semi-Finalist in Flipkart GRID 7.0, and 4-Star Coder on CodeChef.</p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <p class="philosophy">
+                "In code, as in life, the optimal solution is rarely the first one you write. I've learned that true progress isn't about avoiding errors, but about the resilience to debug them. Whether optimizing a database query or navigating a career, the most elegant outcomes are born from iteration, consistency, and the courage to refactor your approach until it works."
+            </p>
+            <!-- <div class="separator"></div> -->
+            <p class="copyright">
+                © 2025 The Decent Engineer — Built with ❤️ & AI
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // --- REPLACED THREE.JS BACKGROUND ---
+        
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.002);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 400;
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // Append renderer to the specific div
+        const container = document.getElementById('bg-canvas');
+        container.appendChild(renderer.domElement);
+
+        // Simple Particles
+        const geometry = new THREE.BufferGeometry();
+        const count = 4000;
+        const posArray = new Float32Array(count * 3);
+        
+        for(let i=0; i<count*3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 1500;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        
+        // Material from source (Indigo/Blue tint)
+        const material = new THREE.PointsMaterial({ 
+            size: 2, 
+            color: 0x4d60fb, 
+            transparent: true, 
+            opacity: 0.8 
+        });
+        
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        let mouseX = 0; 
+        let mouseY = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX - window.innerWidth/2;
+            mouseY = e.clientY - window.innerHeight/2;
+        });
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotation animation from source
+            particles.rotation.y += 0.0005;
+            
+            // Camera movement based on mouse
+            camera.position.x += (mouseX * 0.05 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 0.05 - camera.position.y) * 0.05;
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>

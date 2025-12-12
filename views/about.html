@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Origin Story</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- Reuse Shared Variables --- */
+        :root {
+            --bg-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --primary-color: #4d60fb;
+            --accent-color: #00ffcc;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --font-stack: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+        }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; width: 100%; height: 100%; }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 900px;
+            margin: 80px auto;
+            padding: 0 20px;
+        }
+
+        /* --- Narrative Section --- */
+        .about-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #fff, var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            line-height: 1.8;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .highlight { color: var(--primary-color); font-weight: 600; }
+
+        /* --- Stats Grid --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-box {
+            background: rgba(77, 96, 251, 0.05); /* Indigo tint */
+            border: 1px solid rgba(77, 96, 251, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            background: rgba(0, 255, 204, 0.05); /* Cyan tint on hover */
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- Philosophy Quote --- */
+        .philosophy {
+            border-left: 4px solid var(--accent-color);
+            padding-left: 25px;
+            font-style: italic;
+            color: #ddd;
+            margin-top: 30px;
+        }
+
+        /* --- Navigation Button --- */
+        .back-btn {
+            position: fixed; top: 30px; left: 30px;
+            color: #fff; text-decoration: none; font-size: 1.2rem;
+            opacity: 0.7; transition: 0.3s;
+        }
+        .back-btn:hover { opacity: 1; color: var(--accent-color); }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bg-canvas"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Home</a>
+
+    <div class="container">
+        
+        <div class="about-card">
+            <h1>Behind the Code</h1>
+            <p>
+                I am <span class="highlight">Devyani Tyagi</span>, a Final Year IT Undergraduate and Full Stack Developer.
+                My journey began with the rigid logic of C++ algorithms, where I learned the discipline of optimization.
+                Today, I apply that rigor to build fluid, intelligent web systems.
+            </p>
+            <p>
+                From architecting AI-driven backends that process <span class="highlight">2,500+ DSA problems</span>  to designing 
+                sustainable e-commerce ecosystems like <span class="highlight">ReNova</span>, I focus on creating technology that solves 
+                real-world inefficiencies.
+            </p>
+            
+            <div class="philosophy">
+                "In code, as in life, the optimal solution is rarely the first one you write. True progress isn't about avoiding errors, but about the resilience to debug them."
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="stat-number">1,000+</span>
+                <span class="stat-label">DSA Problems Solved </span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number">Top 1.5%</span>
+                <span class="stat-label">Flipkart GRID 7.0 </span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number">Knight</span>
+                <span class="stat-label">LeetCode Rank </span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number">4 ★</span>
+                <span class="stat-label">CodeChef Rating </span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.002);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 400;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('bg-canvas').appendChild(renderer.domElement);
+
+        // Simple Particles
+        const geometry = new THREE.BufferGeometry();
+        const count = 4000;
+        const posArray = new Float32Array(count * 3);
+        for(let i=0; i<count*3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 1500;
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const material = new THREE.PointsMaterial({ size: 2, color: 0x4d60fb, transparent: true, opacity: 0.8 });
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        let mouseX = 0; let mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX - window.innerWidth/2;
+            mouseY = e.clientY - window.innerHeight/2;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.y += 0.0005;
+            camera.position.x += (mouseX * 0.05 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 0.05 - camera.position.y) * 0.05;
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

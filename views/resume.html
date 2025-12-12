@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devyani Tyagi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- Shared Theme Variables --- */
+        :root {
+            --bg-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --primary-color: #4d60fb;    /* Indigo */
+            --accent-color: #00ffcc;     /* Neon Cyan */
+            --border-color: rgba(255, 255, 255, 0.1);
+            --font-stack: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            min-height: 100vh;
+            overflow-x: hidden;
+            cursor: default;
+        }
+
+        /* --- Background Canvas --- */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+        }
+
+        /* --- Navigation Button --- */
+        .back-btn {
+            position: fixed; top: 30px; left: 30px;
+            color: #fff; text-decoration: none; font-size: 1.2rem;
+            opacity: 0.7; transition: 0.3s; z-index: 100;
+        }
+        .back-btn:hover { opacity: 1; color: var(--accent-color); }
+
+        /* --- Resume Container (Glassmorphism) --- */
+        .resume-container {
+            max-width: 950px;
+            margin: 80px auto 60px auto;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 0 50px rgba(77, 96, 251, 0.15);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- Header --- */
+        header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--accent-color); 
+        }
+
+        .header-left h2 {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .contact-info {
+            text-align: right;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .contact-info p { margin-bottom: 5px; }
+        .contact-info a { color: var(--text-secondary); text-decoration: none; transition: 0.3s; }
+        .contact-info a:hover { color: var(--accent-color); }
+        .contact-info i { color: var(--primary-color); width: 20px; text-align: center; margin-right: 5px; }
+
+        /* --- Sections --- */
+        section { margin-bottom: 40px; }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border-color), transparent);
+            margin-left: 15px;
+        }
+
+        /* --- Content Items --- */
+        .item {
+            margin-bottom: 25px;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .role { font-size: 1.1rem; font-weight: 700; color: #fff; }
+        .org { color: var(--primary-color); font-weight: 400; }
+        .date { color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; }
+
+        .desc ul { list-style: none; margin-top: 10px; }
+        .desc li { 
+            margin-bottom: 6px; 
+            position: relative; 
+            padding-left: 20px; 
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        .desc li::before {
+            content: '▹';
+            position: absolute; left: 0; color: var(--accent-color);
+        }
+
+        /* --- Skills Grid --- */
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        /* UPDATED SKILL TAG CSS FOR LINKS */
+        .skill-tag {
+            background: rgba(77, 96, 251, 0.1);
+            border: 1px solid rgba(77, 96, 251, 0.3);
+            color: #ddd;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: 0.3s;
+            
+            /* New properties for links */
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .skill-tag:hover {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(77, 96, 251, 0.4);
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .header-left, .contact-info { text-align: left; width: 100%; }
+            .item-header { flex-direction: column; }
+            .date { margin-bottom: 5px; }
+            .resume-container { margin: 60px 20px 20px 20px; padding: 25px; }
+            .header-left h1 { font-size: 2.5rem; }
+            .back-btn { top: 20px; left: 20px; font-size: 1rem; }
+        }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            body { background: #fff; color: #000; }
+            #bg-canvas, .back-btn { display: none; }
+            .resume-container {
+                box-shadow: none; border: none; margin: 0; padding: 0;
+                background: none; color: #000; max-width: 100%;
+            }
+            .header-left h1 { color: #000; }
+            .section-title { color: #000; border-bottom: 2px solid #000; }
+            .section-title::after { display: none; }
+            .role, .org, .date, .desc li { color: #000 !important; }
+            .skill-tag { border: 1px solid #000; color: #000; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="bg-canvas"></div>
+
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Home</a>
+
+    <div class="resume-container">
+        <header>
+            <div class="header-left">
+                <h1>Devyani Tyagi</h1>
+                <h2>Information Technology Undergraduate</h2>
+            </div>
+            <div class="contact-info">
+                <p><i class="fas fa-map-marker-alt"></i> Ghaziabad</p>
+                <p><i class="fas fa-envelope"></i> <a href="mailto:devyani0096@gmail.com">devyani0096@gmail.com</a></p>
+                <p><i class="fas fa-phone"></i> 9760644522</p>
+                <p><i class="fab fa-linkedin"></i> <a href="https://linkedin.com/in/devyani-tyagi-713591257">LinkedIn Profile</a></p>
+                <p><i class="fab fa-github"></i> <a href="https://github.com/DevyanifanofRDJ">github.com/DevyanifanofRDJ</a></p>
+            </div>
+        </header>
+
+        <section>
+            <div class="section-title">Experience</div>
+            <div class="item">
+                <div class="item-header">
+                    <div>
+                        <span class="role">Intern, Full Stack Development with AI Engineering</span>
+                        <span class="org"> // Programming Pathshala</span>
+                    </div>
+                </div>
+                <div class="desc">
+                    <ul>
+                        <li>Architected a complete backend for a DSA Recommender using a microservices architecture, processing over 2,500 unique problems into 384-dimension vectors for robust semantic analysis.</li>
+                        <li>Developed a high-performance AI recommendation engine in Python/FastAPI using cosine similarity and deployed a decoupled Node.js/MongoDB data service featuring 4+ API endpoints.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Projects</div>
+            
+            <div class="item">
+                <div class="item-header">
+                    <div>
+                        <span class="role">MynVision</span>
+                        <span class="org"> // Machine Learning Analytics</span>
+                    </div>
+                </div>
+                <div class="desc">
+                    <ul>
+                        <li>Constructed a ML-based analytics system with HTML, CSS, and JS frontend to track user browsing patterns.</li>
+                        <li>Analyzed 1,000+ daily interactions to identify top-viewed outfits and emerging fashion trends.</li>
+                        <li>Implemented a Python backend with Matplotlib and Seaborn for data visualization and a custom API to serve personalized 'Outfit of the Day' from 10,000+ entries.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="item">
+                <div class="item-header">
+                    <div>
+                        <span class="role">ReNova</span>
+                        <span class="org"> // Sustainability E-Commerce</span>
+                    </div>
+                </div>
+                <div class="desc">
+                    <ul>
+                        <li>Engineered a sustainability website featuring a resale page designed to reduce customer return losses (impacting up to 30% of inventory).</li>
+                        <li>Boosted customer retention by designing a smart return assistant that offered repair suggestions and rewarded sustainable choices.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Technical Skills</div>
+            <div class="skills-grid">
+                <div class="skill-tag">C++ (Algorithms)</div>
+                <div class="skill-tag">Java</div>
+                <div class="skill-tag">JavaScript</div>
+                <div class="skill-tag">Python</div>
+                <div class="skill-tag">Node.js</div>
+                <div class="skill-tag">FastAPI</div>
+                <div class="skill-tag">HTML/CSS</div>
+                <div class="skill-tag">DSA</div>
+                <div class="skill-tag">OOP</div>
+                <div class="skill-tag">DBMS</div>
+                <div class="skill-tag">Computer Networks</div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Achievements</div>
+            <div class="desc">
+                <ul>
+                    <li><strong>Flipkart GRID 7.0:</strong> National Semi-Finalist, Top 1.5% of 350,000+ applicants.</li>
+                    <li><strong>Myntra Hackathon:</strong> Top 4% rank among 30,000+ teams (Ideation Round Qualifier).</li>
+                    <li><strong>Amazon Hackathon:</strong> Ideation Round Qualifier (National Level).</li>
+                    <li><strong>Meta HackerCup 2024:</strong> Rank 7,904 out of 22,494 participants in Round 1.</li>
+                    <li><strong>IIC 6.0 Idea Competition:</strong> Secured 2nd position among 80 teams.</li>
+                    <li><strong>Certifications:</strong> AWS Academy Cloud Foundations, Introduction to Cybersecurity by Cisco.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Coding Profiles</div>
+            <div class="skills-grid">
+                <a href="https://leetcode.com/Devyani_tryst" target="_blank" class="skill-tag">
+                    <i class="fas fa-code"></i> LeetCode Knight (Rating: 1947, Top 25%)
+                </a>
+                
+                <a href="https://www.codechef.com/users/wide_tryst_45" target="_blank" class="skill-tag">
+                    <i class="fas fa-utensils"></i> CodeChef 4 Star (Rating: 1904)
+                </a>
+                
+                <a href="https://codeforces.com/profile/ms.robot" target="_blank" class="skill-tag">
+                    <i class="fas fa-chart-bar"></i> Codeforces Specialist (Rating: 1401)
+                </a>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Education</div>
+            <div class="item">
+                <div class="item-header">
+                    <div>
+                        <span class="role">B.Tech in Information Technology</span>
+                        <span class="org"> // ABES Engineering College</span>
+                    </div>
+                    <span class="date">Nov 2022 - May 2026</span>
+                </div>
+                <div class="desc">
+                    <ul>
+                        <li>Current CGPA: 8.1/10</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // --- THREE.JS BACKGROUND (Exact copy from Contact Page) ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.002);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 400;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('bg-canvas').appendChild(renderer.domElement);
+
+        // Particles
+        const geometry = new THREE.BufferGeometry();
+        const count = 3000;
+        const posArray = new Float32Array(count * 3);
+        for(let i=0; i<count*3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 1200;
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const material = new THREE.PointsMaterial({ size: 2, color: 0x00ffcc, transparent: true, opacity: 0.6 });
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        let mouseX = 0; let mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX - window.innerWidth/2;
+            mouseY = e.clientY - window.innerHeight/2;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.y += 0.0005;
+            camera.position.x += (mouseX * 0.05 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 0.05 - camera.position.y) * 0.05;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

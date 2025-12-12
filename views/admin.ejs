@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Center | Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- Reuse your Dark Theme Styles --- */
+        :root {
+            --bg-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --primary-color: #4d60fb;
+            --accent-color: #00ffcc;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --danger-color: #ff3333;
+            --font-stack: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            margin: 0; padding: 20px;
+        }
+
+        .admin-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px; border-bottom: 1px solid var(--border-color); margin-bottom: 30px;
+        }
+        .admin-title { font-size: 1.5rem; color: var(--accent-color); text-transform: uppercase; letter-spacing: 2px; }
+        
+        .logout-btn {
+            color: var(--text-secondary); text-decoration: none; border: 1px solid var(--border-color);
+            padding: 8px 16px; border-radius: 20px; transition: 0.3s;
+        }
+        .logout-btn:hover { background: var(--danger-color); border-color: var(--danger-color); color: #fff; }
+
+        .table-container {
+            max-width: 1400px; /* Made wider to fit 4 columns */
+            margin: 0 auto; background: var(--card-bg);
+            border: 1px solid var(--border-color); border-radius: 15px; overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 20px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background: rgba(77, 96, 251, 0.1); color: var(--accent-color); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+
+        .message-cell { color: var(--text-secondary); line-height: 1.5; max-width: 400px; }
+        .name-cell { font-weight: bold; color: #fff; min-width: 120px; }
+        
+        /* Two Email Columns Style */
+        .email-cell { font-family: monospace; color: #fff; font-size: 0.9rem; }
+        .verified-cell { color: var(--accent-color); font-family: monospace; font-size: 0.9rem; }
+        
+        .empty-state { padding: 50px; text-align: center; color: var(--text-secondary); font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-header">
+        <div class="admin-title"><i class="fas fa-terminal"></i> Incoming Transmissions</div>
+        <a href="/" class="logout-btn">Terminate Session</a>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Sender</th>
+                    <th>Input Email (Claimed)</th>
+                    <th>Verified Email (Token)</th>
+                    <th>Payload</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (messages.length === 0) { %>
+                    <tr>
+                        <td colspan="4" class="empty-state">No signals detected in the void.</td>
+                    </tr>
+                <% } else { %>
+                    <% messages.forEach(function(msg) { %>
+                        <tr>
+                            <td class="name-cell"><%= msg.name %></td>
+
+                            <td class="email-cell">
+                                <i class="far fa-keyboard" style="opacity:0.5; margin-right:5px;"></i> 
+                                <%= msg.typedEmail %> 
+                            </td>
+
+                            <td class="verified-cell">
+                                <i class="fas fa-shield-alt" style="margin-right:5px;"></i>
+                                <%= msg.actualEmail || msg.email %> 
+                            </td>
+
+                            <td class="message-cell"><%= msg.message %></td>
+                        </tr>
+                    <% }); %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

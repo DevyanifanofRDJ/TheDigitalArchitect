@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Let's Collaborate</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      /* --- Reuse Shared Variables --- */
+      :root {
+        --bg-color: #000000;
+        --card-bg: rgba(255, 255, 255, 0.03);
+        --text-main: #ffffff;
+        --text-secondary: #aaaaaa;
+        --primary-color: #4d60fb; /* Indigo */
+        --accent-color: #00ffcc; /* Neon Cyan */
+        --warning-color: #ffaa00; /* Amber for disclaimer */
+        --border-color: rgba(255, 255, 255, 0.1);
+        --font-stack: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        font-family: var(--font-stack);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow-x: hidden;
+      }
+
+      #bg-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* --- Navigation Button --- */
+      .back-btn {
+        position: fixed;
+        top: 30px;
+        left: 30px;
+        color: #fff;
+        text-decoration: none;
+        font-size: 1.2rem;
+        opacity: 0.7;
+        transition: 0.3s;
+        z-index: 20;
+      }
+      .back-btn:hover {
+        opacity: 1;
+        color: var(--accent-color);
+      }
+
+      /* --- Main Container --- */
+      .contact-container {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 900px;
+        width: 90%;
+        background: var(--card-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 0 50px rgba(77, 96, 251, 0.15);
+        animation: slideUp 0.5s ease-out;
+        min-height: 500px; /* Ensure height consistency during animation */
+      }
+
+      /* --- Left Side: Info --- */
+      .contact-info {
+        flex: 1;
+        padding: 50px;
+        background: rgba(77, 96, 251, 0.05);
+        border-right: 1px solid var(--border-color);
+        min-width: 300px;
+      }
+
+      .contact-info h1 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        background: linear-gradient(to right, #fff, var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .contact-info p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 40px;
+      }
+
+      .info-item {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+      }
+
+      .info-item i {
+        color: var(--primary-color);
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        margin-right: 15px;
+        transition: 0.3s;
+      }
+
+      .info-item:hover i {
+        background: var(--primary-color);
+        color: #fff;
+        box-shadow: 0 0 15px var(--primary-color);
+      }
+
+      .info-item a {
+        color: #fff;
+        text-decoration: none;
+        transition: 0.3s;
+      }
+      .info-item a:hover {
+        color: var(--accent-color);
+      }
+
+      /* --- Right Side: Form --- */
+      .contact-form {
+        flex: 1.5;
+        padding: 50px;
+        min-width: 300px;
+        position: relative;
+      }
+
+      .input-group {
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        color: #fff;
+        font-family: var(--font-stack);
+        font-size: 1rem;
+        outline: none;
+        transition: 0.3s;
+      }
+
+      textarea {
+        resize: none;
+        height: 150px;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      label {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        color: var(--text-secondary);
+        pointer-events: none;
+        transition: 0.3s;
+        font-size: 1rem;
+      }
+
+      input:focus ~ label,
+      input:not(:placeholder-shown) ~ label,
+      textarea:focus ~ label,
+      textarea:not(:placeholder-shown) ~ label {
+        top: -10px;
+        left: 10px;
+        font-size: 0.8rem;
+        color: var(--accent-color);
+        background: #000;
+        padding: 0 5px;
+      }
+
+      /* --- Security Disclaimer Box (NEW) --- */
+      .security-note {
+        font-size: 0.85rem;
+        color: var(--warning-color);
+        background: rgba(255, 170, 0, 0.08);
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        line-height: 1.4;
+        border: 1px solid rgba(255, 170, 0, 0.2);
+        display: flex;
+        gap: 10px;
+        align-items: start;
+      }
+      .security-note i {
+        margin-top: 3px;
+        font-size: 1rem;
+      }
+
+      button {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(
+          45deg,
+          var(--primary-color),
+          var(--accent-color)
+        );
+        border: none;
+        border-radius: 30px;
+        color: #000;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: 0.3s;
+        box-shadow: 0 0 20px rgba(77, 96, 251, 0.3);
+      }
+
+      button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 30px var(--accent-color);
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      /* --- Success Message (Hidden by default) --- */
+      .success-message {
+        display: none;
+        text-align: center;
+        padding: 40px 20px;
+        animation: fadeIn 0.5s ease-out;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .success-icon {
+        font-size: 4rem;
+        color: var(--accent-color);
+        margin-bottom: 20px;
+        text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      .success-message h2 {
+        font-size: 2rem;
+        color: #fff;
+        margin-bottom: 10px;
+      }
+      .success-message p {
+        color: var(--text-secondary);
+        font-size: 1rem;
+      }
+
+      /* Animations */
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes popIn {
+        0% {
+          transform: scale(0);
+          opacity: 0;
+        }
+        80% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /* Mobile */
+      @media (max-width: 768px) {
+        .contact-container {
+          flex-direction: column;
+          margin: 80px 0;
+        }
+        .contact-info {
+          border-right: none;
+          border-bottom: 1px solid var(--border-color);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bg-canvas"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Home</a>
+
+    <div class="contact-container">
+      <div class="contact-info">
+        <h1>Get in Touch</h1>
+        <p>
+          Whether you have a question, a project idea, or just want to discuss
+          the future of AI, my inbox is always open.
+        </p>
+
+        <div class="info-item">
+          <i class="fas fa-envelope"></i>
+          <a href="mailto:devyani0096@gmail.com">devyani0096@gmail.com</a>
+        </div>
+
+        <div class="info-item">
+          <i class="fab fa-linkedin-in"></i>
+          <a
+            href="https://linkedin.com/in/devyani-tyagi-713591257"
+            target="_blank"
+            >LinkedIn Profile</a
+          >
+        </div>
+
+        <div class="info-item">
+          <i class="fab fa-github"></i>
+          <a href="https://github.com/DevyanifanofRDJ" target="_blank"
+            >GitHub Profile</a
+          >
+        </div>
+
+        <div class="info-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Ghaziabad, India</span>
+        </div>
+      </div>
+
+      <div class="contact-form">
+        <form action="/message" method="post" id="contactForm">
+          <div class="input-group">
+            <input type="text" id="name" name="name" required placeholder=" " />
+            <label for="name">Your Name</label>
+          </div>
+
+          <div class="input-group">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder=" "
+            />
+            <label for="email">Email Address</label>
+          </div>
+
+          <div class="input-group">
+            <textarea
+              id="message"
+              name="message"
+              required
+              placeholder=" "
+            ></textarea>
+            <label for="message">Message</label>
+          </div>
+
+          <div class="security-note">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>
+                <strong>Disclaimer:</strong> The message you type here is <strong>not hashed</strong>. 
+                Please do not share sensitive personal details (passwords, financial data). 
+                If you do, <strong>Devyani Tyagi</strong> shall not be responsible for any data exposure.
+            </span>
+          </div>
+
+          <button type="submit" id="submitBtn">
+            <span>Send Message</span>
+            <i class="fas fa-paper-plane" style="margin-left: 8px"></i>
+          </button>
+        </form>
+
+        <div id="successMessage" class="success-message">
+          <i class="fas fa-check-circle success-icon"></i>
+          <h2>Message Sent!</h2>
+          <p>
+            Thanks for reaching out,
+            <span
+              id="userNameDisplay"
+              style="color: var(--primary-color)"
+            ></span
+            >.
+          </p>
+          <p>I'll get back to you shortly.</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /**
+       * 1. FORM HANDLING LOGIC
+       */
+      const contactForm = document.getElementById("contactForm");
+      const successMessage = document.getElementById("successMessage");
+      const submitBtn = document.getElementById("submitBtn");
+      const userNameDisplay = document.getElementById("userNameDisplay");
+      const nameInput = document.getElementById("name");
+      const emailInput = document.getElementById("email");
+      const messageInput = document.getElementById("message");
+
+      if (contactForm) {
+        contactForm.addEventListener("submit", async (e) => {
+          e.preventDefault(); // 1. Stop page reload
+
+          // 2. Get Data from inputs
+          const formData = {
+            name: nameInput.value,
+            email: emailInput.value,
+            message: messageInput.value,
+          };
+
+          // 3. Update Button to "Sending..."
+          const originalBtnText = submitBtn.innerHTML;
+          submitBtn.innerHTML =
+            'Sending... <i class="fas fa-spinner fa-spin"></i>';
+          submitBtn.disabled = true;
+
+          try {
+            // 4. Send Data to Backend using Fetch
+            const response = await fetch("/message", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            });
+
+            // 5. Check if Backend saved it successfully
+            if (response.ok) {
+              // --- SUCCESS: Show Animation ---
+              userNameDisplay.innerText = formData.name;
+
+              // Hide Form & Show Success Message
+              contactForm.style.display = "none";
+              successMessage.style.display = "flex";
+            } else {
+              // --- ERROR: Handle Server Errors ---
+              const errorText = await response.text();
+              alert("Error sending message: " + errorText);
+
+              // Reset button so they can try again
+              submitBtn.innerHTML = originalBtnText;
+              submitBtn.disabled = false;
+            }
+          } catch (error) {
+            // --- NETWORK ERROR ---
+            console.error("Error:", error);
+            alert("Something went wrong. Please check your connection.");
+
+            // Reset button
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+          }
+        });
+      }
+      /**
+       * 2. BACKGROUND ANIMATION (Three.js)
+       */
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x000000, 0.002);
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        2000
+      );
+      camera.position.z = 400;
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.getElementById("bg-canvas").appendChild(renderer.domElement);
+
+      // Particles
+      const geometry = new THREE.BufferGeometry();
+      const count = 3000;
+      const posArray = new Float32Array(count * 3);
+      for (let i = 0; i < count * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 1200;
+      }
+      geometry.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
+      const material = new THREE.PointsMaterial({
+        size: 2,
+        color: 0x00ffcc,
+        transparent: true,
+        opacity: 0.6,
+      });
+      const particles = new THREE.Points(geometry, material);
+      scene.add(particles);
+
+      // Mouse Interaction
+      let mouseX = 0;
+      let mouseY = 0;
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX - window.innerWidth / 2;
+        mouseY = e.clientY - window.innerHeight / 2;
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        particles.rotation.y += 0.0005;
+        camera.position.x += (mouseX * 0.05 - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY * 0.05 - camera.position.y) * 0.05;
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  </body>
+</html>

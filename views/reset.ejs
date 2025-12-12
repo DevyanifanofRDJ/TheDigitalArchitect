@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Credentials</title>
+    <style>
+        :root {
+            /* Portfolio Theme Colors */
+            --bg-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --text-main: #ffffff;
+            --text-secondary: #888888;
+            --primary-color: #4d60fb;    /* Indigo */
+            --accent-color: #00ffcc;     /* Neon Cyan */
+            --border-color: rgba(255, 255, 255, 0.1);
+            --font-stack: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --danger-color: #ff3333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- Background --- */
+        #math-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+            background: radial-gradient(circle at center, transparent 0%, #000000 90%);
+        }
+
+        /* --- Card --- */
+        .reset-card {
+            position: relative;
+            z-index: 10;
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 3rem;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 40px rgba(77, 96, 251, 0.15);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.75rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+        .header p { font-size: 0.95rem; color: var(--text-secondary); }
+
+        /* --- Inputs --- */
+        .input-group { position: relative; margin-bottom: 1.5rem; }
+
+        input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            font-size: 1rem;
+            padding: 16px 12px 6px 12px;
+            outline: none;
+            transition: all 0.2s ease;
+            height: 52px;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(0, 255, 204, 0.2);
+        }
+
+        .input-group label {
+            position: absolute; top: 16px; left: 12px;
+            font-size: 1rem; color: var(--text-secondary); pointer-events: none;
+            transition: 0.2s ease all;
+        }
+
+        input:focus ~ label, input:not(:placeholder-shown) ~ label {
+            top: 6px; font-size: 0.75rem; color: var(--accent-color); font-weight: 600;
+        }
+
+        /* --- Button --- */
+        button {
+            width: 100%; padding: 14px;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: #000; border: none; border-radius: 30px;
+            font-family: var(--font-stack); font-weight: 700; font-size: 1rem;
+            cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(77, 96, 251, 0.4);
+            margin-top: 10px;
+        }
+        button:hover { transform: scale(1.02); box-shadow: 0 0 30px var(--accent-color); }
+
+        /* --- Validation Message --- */
+        #message {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            text-align: center;
+            min-height: 20px;
+        }
+        .error-text { color: var(--danger-color); }
+    </style>
+</head>
+<body>
+
+    <canvas id="math-canvas"></canvas>
+
+    <main class="reset-card">
+        <div class="header">
+            <h1>New Credentials</h1>
+            <p>Define a new secure password for your node.</p>
+        </div>
+
+        <form action="/resetPassword" method="post" id="resetForm">
+            
+            <input type="hidden" name="token" value="<%= token %>">
+
+            <div class="input-group">
+                <input type="password" id="newPassword" name="newPassword" placeholder=" " required minlength="6">
+                <label for="newPassword">New Password</label>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="confirmPassword" placeholder=" " required>
+                <label for="confirmPassword">Confirm Password</label>
+            </div>
+
+            <button type="submit">Update Password</button>
+            <div id="message"></div>
+        </form>
+    </main>
+
+    <script>
+        // 1. Client-Side Password Match Validation
+        const form = document.getElementById('resetForm');
+        const p1 = document.getElementById('newPassword');
+        const p2 = document.getElementById('confirmPassword');
+        const msg = document.getElementById('message');
+
+        form.addEventListener('submit', (e) => {
+            if (p1.value !== p2.value) {
+                e.preventDefault(); // Stop submission
+                msg.textContent = "Passwords do not match.";
+                msg.className = "error-text";
+                p2.value = "";
+                p2.focus();
+            }
+        });
+
+        // 2. Background Animation (Same as Login)
+        const canvas = document.getElementById('math-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        const config = {
+            particleCount: 50, connectionDistance: 180, mouseReactionRange: 200,
+            particleColor: 'rgba(0, 255, 204, 0.5)', lineColor: 'rgba(77, 96, 251, 0.3)'
+        };
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width; this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1; this.sides = Math.floor(Math.random() * 3) + 3;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y);
+                ctx.fillStyle = config.particleColor; ctx.beginPath();
+                for (let i = 0; i < this.sides; i++) {
+                    const theta = (i / this.sides) * Math.PI * 2;
+                    const x = this.size * 3 * Math.cos(theta); const y = this.size * 3 * Math.sin(theta);
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.closePath(); ctx.fill(); ctx.restore();
+            }
+        }
+        function init() { resize(); particles = []; for (let i = 0; i < config.particleCount; i++) particles.push(new Particle()); }
+        function animate() {
+            requestAnimationFrame(animate); ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    const dx = particles[a].x - particles[b].x; const dy = particles[a].y - particles[b].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < config.connectionDistance) {
+                        ctx.strokeStyle = `rgba(77, 96, 251, ${ (1 - dist/config.connectionDistance) * 0.4 })`;
+                        ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y); ctx.stroke();
+                    }
+                }
+            }
+        }
+        window.addEventListener('resize', init);
+        init(); animate();
+    </script>
+</body>
+</html>
