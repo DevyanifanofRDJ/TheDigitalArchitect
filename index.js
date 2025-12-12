@@ -112,7 +112,7 @@ app.get('/sign',preventCache,async (req,resp)=>{
     resp.sendFile(absPathHtml+'/signup.html');
 });
 
-app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
+app.post('/signup',preventCache,async (req,resp)=>{
     const name=sanitize(req.body.name);
     const email=sanitize(req.body.email);
     const password=sanitize(req.body.password);
