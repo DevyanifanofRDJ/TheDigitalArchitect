@@ -38,7 +38,7 @@ A Full Stack Portfolio featuring a secure, interactive, and futuristic "Dark Mod
 1.  **Clone the repo**
     ```bash
     git clone [https://github.com/YOUR_USERNAME/devyani-portfolio.git](https://github.com/YOUR_USERNAME/devyani-portfolio.git)
-    cd devyani-portfolio
+    cd TheDigitalArchitect
     ```
 
 2.  **Install dependencies**
