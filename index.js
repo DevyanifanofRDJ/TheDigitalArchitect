@@ -278,7 +278,7 @@ app.post('/forgotPassword',preventCache,rateCheck,async (req,resp)=>{
     }
     const resetToken=jwt.sign({id:user._id},process.env.SECRET_KEY,{expiresIn:"15m"});
     const baseUrl=process.env.BASE_URL;
-    const newLink=`${baseUrl}token=${resetToken}`;
+    const newLink=`${baseUrl}/resetPassword?token=${resetToken}`;
     const mailOption={
         from:"Decent Engineer",
         to:email,
