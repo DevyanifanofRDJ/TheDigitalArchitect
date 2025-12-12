@@ -15,6 +15,7 @@ import messageModel from './model/messageModel.js';
 import forgotPasswordMailContent from './utils/forgotPasswordMailContent.js';
 
 const app=express();
+app.set('trust proxy',1);
 app.set('view engine','ejs');
 const absPathHtml=path.resolve('views');
 const url=process.env.MONGO_URL;
@@ -122,7 +123,7 @@ app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
     if(existingUser){
         return resp.sendFile(absPathHtml+'/login.html');
     }
-    const salt=await bcrypt.genSalt(10);
+    const salt=await bcrypt.genSalt(8);
     const hasedPass=await bcrypt.hash(password,salt);
     const otp=Math.floor(100000+Math.random()*900000).toString();
     const user=JSON.stringify({name,email,password:hasedPass,otp});
