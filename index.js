@@ -141,8 +141,10 @@ app.post('/signup',preventCache,async (req,resp)=>{
         html:mailContent(name,otp)
     };
     transporter.sendMail(mailOption,(error,info)=>{
-        if(error)
+        if(error){
+            console.error(error);
             return resp.send("Try after 10 mins Please!");
+        }
         else    
             return resp.status(200).redirect('/otp-verify');
     });
