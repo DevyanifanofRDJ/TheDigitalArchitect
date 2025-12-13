@@ -121,6 +121,10 @@ app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
     if(typeof name!='string'||typeof email!='string'||typeof password!='string'){
         return resp.send("Invalid Input");
     }
+    const existingTemp=await client.get(`tempUser:${email}`);
+    if(existingTemp) {
+        return resp.redirect('/otp-verify');
+    }
     const existingUser=await userModel.findOne({email});
     if(existingUser){
         return resp.redirect('/log');
@@ -136,6 +140,7 @@ app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
         maxAge:10*60*1000
     });
     const mailOption={
+        from:"Decent Engineer",
         to:email,
         subject:'Confirm Your Access Node',
         text:`Connection Request Received.\n\nHello ${name},\n\nWe are establishing a secure link to your account. To complete the authentication handshake, please use the secure code below:\n\n${otp}\n\nThis key is valid for the next 600 seconds.\n\nIf you did not request this link, please disregard this message. Your secure node remains inactive.\n\n— The Decent Engineer`,
@@ -202,6 +207,10 @@ app.get('/resendOtp',rateCheck,preventCache,async (req,resp)=>{
     if(!email){
         return resp.redirect('/sign');
     }
+    const existingTemp=await client.get(`tempUser:${email}`);
+    if(existingTemp){
+        return resp.redirect('/otp-verify');
+    }
     const existingUser=await userModel.findOne({email});
     if(existingUser){
         return resp.redirect('/log');
@@ -215,6 +224,7 @@ app.get('/resendOtp',rateCheck,preventCache,async (req,resp)=>{
     userData.otp=otp;
     await client.setEx(`tempUser:${email}`,1800,JSON.stringify(userData));
     const mailOption={
+        from:'Decent Engineer',
         to:email,
         subject:'Confirm Your Access Code',
         text:`Connection Request Received.\n\nHello ${userData.name},\n\nWe are establishing a secure link to your account. To complete the authentication handshake, please use the secure code below:\n\n${otp}\n\nThis key is valid for the next 600 seconds.\n\nIf you did not request this link, please disregard this message. Your secure node remains inactive.\n\n— The Decent Engineer`,
@@ -302,6 +312,7 @@ app.post('/forgotPassword',preventCache,forgotPasswordRateCheck,async (req,resp)
     const baseUrl=process.env.BASE_URL;
     const newLink=`${baseUrl}/resetPassword?token=${resetToken}`;
     const mailOption={
+        from:'Decent Engineer',
         to:email,
         subject: '⚠️ Security Protocol: Credential Reset Requested',
         text:`System Alert: A request to overwrite your access credentials was detected.\n\nUse this secure link to define a new password:\n${newLink}\n\nThis link expires in 15 minutes.\n\n— The Decent Engineer`,
