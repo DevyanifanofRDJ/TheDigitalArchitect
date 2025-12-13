@@ -124,7 +124,7 @@ app.get('/sign',preventCache,async (req,resp)=>{
     resp.sendFile(absPathHtml+'/signup.html');
 });
 
-app.post('/signup',otpRateCheck,preventCache,async (req,resp)=>{
+app.post('/signup',preventCache,async (req,resp)=>{
     const name=sanitize(req.body.name);
     const email=sanitize(req.body.email);
     const password=sanitize(req.body.password);
@@ -137,6 +137,10 @@ app.post('/signup',otpRateCheck,preventCache,async (req,resp)=>{
     }
     const salt=await bcrypt.genSalt(8);
     const hasedPass=await bcrypt.hash(password,salt);
+    const existingTemp=await client.get(`tempUser:${email}`);
+    if(existingTemp){
+        return resp.redirect('/otp-verify');
+    }
     const otp=Math.floor(100000+Math.random()*900000).toString();
     const user=JSON.stringify({name,email,password:hasedPass,otp});
     await client.setEx(`tempUser:${email}`,1800,user);
@@ -172,7 +176,7 @@ app.get('/otp-verify',preventCache,(req,resp)=>{
     resp.sendFile(absPathHtml+'/otp.html');
 });
 
-app.post('/verifyOtp',otpRateCheck,preventCache,async (req,resp)=>{
+app.post('/verifyOtp',preventCache,async (req,resp)=>{
     if(!req.cookies.temp_email){
          return resp.status(400).json({
             msg:"OTP expired. Please request a new one."
@@ -208,7 +212,7 @@ app.post('/verifyOtp',otpRateCheck,preventCache,async (req,resp)=>{
     return resp.status(200).json({msg:"Success",redirect:"/"});
 });
 
-app.get('/resendOtp',otpRateCheck,preventCache,async (req,resp)=>{
+app.get('/resendOtp',preventCache,async (req,resp)=>{
     const email=req.cookies.temp_email;
     if(!email){
         return resp.redirect('/sign');
