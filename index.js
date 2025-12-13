@@ -20,10 +20,13 @@ app.set('view engine','ejs');
 const absPathHtml=path.resolve('views');
 const url=process.env.MONGO_URL;
 const SECRET_KEY=process.env.SECRET_KEY;
+const absPathPublic=path.resolve('public');
+
+// --- FIXED TRANSPORTER ---
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: 'smtp.googlemail.com', // <--- CHANGED THIS
     port: 587,
-    secure: false,
+    secure: false, 
     requireTLS: true,
     auth: {
         user: process.env.EMAIL,
@@ -32,18 +35,40 @@ const transporter = nodemailer.createTransport({
     tls: {
         ciphers: "SSLv3" 
     },
-    family: 4 
+    family: 4 // Forces IPv4
 });
-const absPathPublic=path.resolve('public');
 
-await mongoose.connect(url).then(()=>{
-    console.log("Database Connected Successfully!");
+// --- ADDED STARTUP VERIFICATION ---
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("❌ Transporter Error on Startup:", error);
+    } else {
+        console.log("✅ Transporter Ready: Connection established!");
+    }
 });
+
+const startServer = async () => {
+    try {
+        await mongoose.connect(url);
+        console.log("Database Connected Successfully!");
+        
+        // --- FIXED LISTENER ---
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`); // <--- YOU NEED THIS LOG
+        });
+    } catch (error) {
+        console.log("Error connecting to DB:", error);
+    }
+}
+startServer();
+
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(absPathPublic));
 
+// ... (Keep your verifyToken middleware) ...
 const verifyToken=(req,resp,next)=>{
     const authHeader=req.headers["authorization"];
     let token;
@@ -119,41 +144,52 @@ app.get('/sign',preventCache,async (req,resp)=>{
     resp.sendFile(absPathHtml+'/signup.html');
 });
 
+// --- UPDATED SIGNUP ROUTE ---
 app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
     const name=sanitize(req.body.name);
     const email=sanitize(req.body.email);
     const password=sanitize(req.body.password);
+    
+    // Validate inputs
     if(typeof name!='string'||typeof email!='string'||typeof password!='string'){
         return resp.send("Invalid Input");
     }
+    
     const existingUser=await userModel.findOne({email});
     if(existingUser){
         return resp.sendFile(absPathHtml+'/login.html');
     }
+    
     const salt=await bcrypt.genSalt(8);
     const hasedPass=await bcrypt.hash(password,salt);
     const otp=Math.floor(100000+Math.random()*900000).toString();
     const user=JSON.stringify({name,email,password:hasedPass,otp});
+    
     await client.setEx(`tempUser:${email}`,1800,user);
     resp.cookie('temp_email',email,{
         httpOnly:true,
         sameSite:"strict",
         maxAge:10*60*1000
     });
+    
     const mailOption={
         from:'Decent Engineer',
         to:email,
         subject:'Confirm Your Access Node',
-        text:`Connection Request Received.\n\nHello ${name},\n\nWe are establishing a secure link to your account. To complete the authentication handshake, please use the secure code below:\n\n${otp}\n\nThis key is valid for the next 600 seconds.\n\nIf you did not request this link, please disregard this message. Your secure node remains inactive.\n\n— The Decent Engineer`,
+        text:`Your OTP is ${otp}`,
         html:mailContent(name,otp)
     };
+
+    // LOGGING ADDED HERE
     transporter.sendMail(mailOption,(error,info)=>{
         if(error){
-            console.error(error);
+            console.error("❌ EMAIL FAILED:", error); // Logs error to Render
             return resp.send("Try after 10 mins Please!");
         }
-        else    
+        else {    
+            console.log("✅ EMAIL SENT:", info.response);
             return resp.status(200).redirect('/otp-verify');
+        }
     });
 });
 
@@ -211,11 +247,12 @@ app.get('/resendOtp',rateCheck,preventCache,async (req,resp)=>{
         from:'tyagidevyani3@gmail.com',
         to:email,
         subject:'Confirm Your Access Code',
-        text:`Connection Request Received.\n\nHello ${name},\n\nWe are establishing a secure link to your account. To complete the authentication handshake, please use the secure code below:\n\n${otp}\n\nThis key is valid for the next 600 seconds.\n\nIf you did not request this link, please disregard this message. Your secure node remains inactive.\n\n— The Decent Engineer`,
+        text:`OTP: ${otp}`,
         html:mailContent(name,otp)
     };
     transporter.sendMail(mailOption,(error,info)=>{
         if(error){
+            console.error("Resend OTP Error:", error);
             return resp.send("Email not Sent!");
         }
         else{
@@ -293,7 +330,7 @@ app.post('/forgotPassword',preventCache,rateCheck,async (req,resp)=>{
         from:"Decent Engineer",
         to:email,
         subject: '⚠️ Security Protocol: Credential Reset Requested',
-        text:`System Alert: A request to overwrite your access credentials was detected.\n\nUse this secure link to define a new password:\n${newLink}\n\nThis link expires in 15 minutes.\n\n— The Decent Engineer`,
+        text:`Reset link: ${newLink}`,
         html:forgotPasswordMailContent(newLink)
     };
     transporter.sendMail(mailOption,(error,info)=>{
@@ -353,5 +390,3 @@ app.post('/resetPassword',preventCache,rateCheck,async (req,resp)=>{
 app.get('/passwordUpdated',(req,resp)=>{
     resp.sendFile(absPathHtml+'/passwordUpdated.html');
 });
-
-app.listen(process.env.PORT);
