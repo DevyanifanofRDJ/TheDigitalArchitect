@@ -68,6 +68,16 @@ const forgotPasswordRateCheck=rateLimit({
   }
 });
 
+const otpRateCheck=rateLimit({
+    windowMs:10*60*1000, 
+    max:5,
+    standardHeaders:true,
+    legacyHeaders:false,
+    message: {
+        msg: "Too many OTP requests. Please wait 10 minutes."
+    }
+});
+
 const preventCache=(req,resp,next)=>{
     resp.set('Cache-Control','no-store,no-cache,must-revalidate,private');
     resp.set('Pragma','no-cache');
@@ -114,7 +124,7 @@ app.get('/sign',preventCache,async (req,resp)=>{
     resp.sendFile(absPathHtml+'/signup.html');
 });
 
-app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
+app.post('/signup',otpRateCheck,preventCache,async (req,resp)=>{
     const name=sanitize(req.body.name);
     const email=sanitize(req.body.email);
     const password=sanitize(req.body.password);
@@ -144,7 +154,7 @@ app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
     };
     try{
         await resend.emails.send({
-            from:"Decent Engineer <onboarding@resend.dev>",
+            from:"The Decent Engineer <onboarding@resend.dev>",
             to:mailOption.to,
             subject:mailOption.subject,
             text:mailOption.text,
@@ -162,7 +172,7 @@ app.get('/otp-verify',preventCache,(req,resp)=>{
     resp.sendFile(absPathHtml+'/otp.html');
 });
 
-app.post('/verifyOtp',rateCheck,preventCache,async (req,resp)=>{
+app.post('/verifyOtp',otpRateCheck,preventCache,async (req,resp)=>{
     if(!req.cookies.temp_email){
          return resp.status(400).json({
             msg:"OTP expired. Please request a new one."
@@ -198,7 +208,7 @@ app.post('/verifyOtp',rateCheck,preventCache,async (req,resp)=>{
     return resp.status(200).json({msg:"Success",redirect:"/"});
 });
 
-app.get('/resendOtp',rateCheck,preventCache,async (req,resp)=>{
+app.get('/resendOtp',otpRateCheck,preventCache,async (req,resp)=>{
     const email=req.cookies.temp_email;
     if(!email){
         return resp.redirect('/sign');
@@ -224,7 +234,7 @@ app.get('/resendOtp',rateCheck,preventCache,async (req,resp)=>{
     };
     try{
         await resend.emails.send({
-            from:"Decent Engineer <onboarding@resend.dev>",
+            from:"The Decent Engineer <onboarding@resend.dev>",
             to:mailOption.to,
             subject:mailOption.subject,
             text:mailOption.text,
@@ -312,7 +322,7 @@ app.post('/forgotPassword',preventCache,forgotPasswordRateCheck,async (req,resp)
     };
     try{
         await resend.emails.send({
-            from:"Decent Engineer <onboarding@resend.dev>",
+            from:"The Decent Engineer <onboarding@resend.dev>",
             to:mailOption.to,
             subject:mailOption.subject,
             text:mailOption.text,
