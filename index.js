@@ -21,7 +21,9 @@ const absPathHtml=path.resolve('views');
 const url=process.env.MONGO_URL;
 const SECRET_KEY=process.env.SECRET_KEY;
 const transporter=nodemailer.createTransport({
-    service:'gmail',
+    host:'smtp.gmail.com',
+    port:465,
+    secure:true,
     auth:{
         user:process.env.EMAIL,
         pass:process.env.EMAIL_PASS
@@ -112,7 +114,7 @@ app.get('/sign',preventCache,async (req,resp)=>{
     resp.sendFile(absPathHtml+'/signup.html');
 });
 
-app.post('/signup',preventCache,async (req,resp)=>{
+app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
     const name=sanitize(req.body.name);
     const email=sanitize(req.body.email);
     const password=sanitize(req.body.password);
