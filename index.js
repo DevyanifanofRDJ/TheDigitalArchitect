@@ -12,7 +12,7 @@ import rateLimit from 'express-rate-limit';
 import sanitize from 'mongo-sanitize';
 import messageModel from './model/messageModel.js';
 import forgotPasswordMailContent from './utils/forgotPasswordMailContent.js';
-import {Resend} from 'resend';
+import nodemailer from 'nodemailer';
 
 const app=express();
 app.set('trust proxy',1);
@@ -20,7 +20,15 @@ app.set('view engine','ejs');
 const absPathHtml=path.resolve('views');
 const url=process.env.MONGO_URL;
 const SECRET_KEY=process.env.SECRET_KEY;
-const resend=new Resend(process.env.RESEND_API_KEY);
+const transporter=nodemailer.createTransport({
+    host:"smtp.gmail.com",
+    port:465,
+    secure:true,
+    auth:{
+        user:process.env.EMAIL,
+        pass:process.env.EMAIL_PASS
+    }
+});
 const absPathPublic=path.resolve('public');
 
 await mongoose.connect(url).then(()=>{
@@ -41,14 +49,14 @@ const verifyToken=(req,resp,next)=>{
         token=req.cookies.token;
     }
     if(!token)
-        return resp.sendFile(absPathHtml+'/login.html');
+        return resp.status(401).redirect('/log');
     try{
         const decode=jwt.verify(token,SECRET_KEY);
         req.user=decode;
         next();
     }
     catch(error){
-        return resp.sendFile(absPathHtml+'/login.html');
+        return resp.status(401).redirect('/log');
     }
 };
 
@@ -124,7 +132,7 @@ app.get('/sign',preventCache,async (req,resp)=>{
     resp.sendFile(absPathHtml+'/signup.html');
 });
 
-app.post('/signup',preventCache,async (req,resp)=>{
+app.post('/signup',otpRateCheck,preventCache,async (req,resp)=>{
     const name=sanitize(req.body.name);
     const email=sanitize(req.body.email);
     const password=sanitize(req.body.password);
@@ -137,16 +145,12 @@ app.post('/signup',preventCache,async (req,resp)=>{
     }
     const salt=await bcrypt.genSalt(8);
     const hasedPass=await bcrypt.hash(password,salt);
-    const existingTemp=await client.get(`tempUser:${email}`);
-    if(existingTemp){
-        return resp.redirect('/otp-verify');
-    }
     const otp=Math.floor(100000+Math.random()*900000).toString();
     const user=JSON.stringify({name,email,password:hasedPass,otp});
     await client.setEx(`tempUser:${email}`,1800,user);
     resp.cookie('temp_email',email,{
         httpOnly:true,
-        sameSite:"strict",
+        sameSite:"lax",
         maxAge:10*60*1000
     });
     const mailOption={
@@ -156,27 +160,19 @@ app.post('/signup',preventCache,async (req,resp)=>{
         text:`Connection Request Received.\n\nHello ${name},\n\nWe are establishing a secure link to your account. To complete the authentication handshake, please use the secure code below:\n\n${otp}\n\nThis key is valid for the next 600 seconds.\n\nIf you did not request this link, please disregard this message. Your secure node remains inactive.\n\n— The Decent Engineer`,
         html:mailContent(name,otp)
     };
-    try{
-        await resend.emails.send({
-            from:"The Decent Engineer <onboarding@resend.dev>",
-            to:mailOption.to,
-            subject:mailOption.subject,
-            text:mailOption.text,
-            html:mailOption.html,
-        });
-        return resp.redirect('/otp-verify');
-    } 
-    catch(error){
-        console.error(error);
-        return resp.send("Email not Sent");
-    }
+     transporter.sendMail(mailOption,(error,info)=>{
+        if(error)
+            return resp.send("Try after 10 mins Please!");
+        else    
+            return resp.status(200).redirect('/otp-verify');
+    });
 });
 
 app.get('/otp-verify',preventCache,(req,resp)=>{
     resp.sendFile(absPathHtml+'/otp.html');
 });
 
-app.post('/verifyOtp',preventCache,async (req,resp)=>{
+app.post('/verifyOtp',rateCheck,preventCache,async (req,resp)=>{
     if(!req.cookies.temp_email){
          return resp.status(400).json({
             msg:"OTP expired. Please request a new one."
@@ -212,7 +208,7 @@ app.post('/verifyOtp',preventCache,async (req,resp)=>{
     return resp.status(200).json({msg:"Success",redirect:"/"});
 });
 
-app.get('/resendOtp',preventCache,async (req,resp)=>{
+app.get('/resendOtp',otpRateCheck,preventCache,async (req,resp)=>{
     const email=req.cookies.temp_email;
     if(!email){
         return resp.redirect('/sign');
@@ -236,20 +232,14 @@ app.get('/resendOtp',preventCache,async (req,resp)=>{
         text:`Connection Request Received.\n\nHello ${userData.name},\n\nWe are establishing a secure link to your account. To complete the authentication handshake, please use the secure code below:\n\n${otp}\n\nThis key is valid for the next 600 seconds.\n\nIf you did not request this link, please disregard this message. Your secure node remains inactive.\n\n— The Decent Engineer`,
         html:mailContent(userData.name,otp)
     };
-    try{
-        await resend.emails.send({
-            from:"The Decent Engineer <onboarding@resend.dev>",
-            to:mailOption.to,
-            subject:mailOption.subject,
-            text:mailOption.text,
-            html:mailOption.html,
-        });
-        return resp.redirect('/otp-verify');
-    } 
-    catch(error){
-        console.error(error);
-        return resp.send("Email not Sent!");
-    }
+    transporter.sendMail(mailOption,(error,info)=>{
+        if(error){
+            return resp.send("Email not Sent!");
+        }
+        else{
+            return resp.redirect('/otp-verify');
+        }
+    });
 });
 
 app.get('/resume',verifyToken,preventCache,(req,resp)=>{
@@ -324,20 +314,12 @@ app.post('/forgotPassword',preventCache,forgotPasswordRateCheck,async (req,resp)
         text:`System Alert: A request to overwrite your access credentials was detected.\n\nUse this secure link to define a new password:\n${newLink}\n\nThis link expires in 15 minutes.\n\n— The Decent Engineer`,
         html:forgotPasswordMailContent(newLink)
     };
-    try{
-        await resend.emails.send({
-            from:"The Decent Engineer <onboarding@resend.dev>",
-            to:mailOption.to,
-            subject:mailOption.subject,
-            text:mailOption.text,
-            html:mailOption.html,
-        });
-        return resp.redirect('/checkMail');
-    } 
-    catch(error){
-        console.error(error);
-        return resp.send("Mail not Sent");
-    }
+    transporter.sendMail(mailOption,(error,info)=>{
+        if(error)
+            return resp.send("Mail not sent");
+        else
+            return resp.redirect('/checkMail');
+    });
 });
 
 app.get('/checkMail',preventCache,(req,resp)=>{
