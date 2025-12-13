@@ -121,10 +121,6 @@ app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
     if(typeof name!='string'||typeof email!='string'||typeof password!='string'){
         return resp.send("Invalid Input");
     }
-    const existingTemp=await client.get(`tempUser:${email}`);
-    if(existingTemp) {
-        return resp.redirect('/otp-verify');
-    }
     const existingUser=await userModel.findOne({email});
     if(existingUser){
         return resp.redirect('/log');
@@ -206,10 +202,6 @@ app.get('/resendOtp',rateCheck,preventCache,async (req,resp)=>{
     const email=req.cookies.temp_email;
     if(!email){
         return resp.redirect('/sign');
-    }
-    const existingTemp=await client.get(`tempUser:${email}`);
-    if(existingTemp){
-        return resp.redirect('/otp-verify');
     }
     const existingUser=await userModel.findOne({email});
     if(existingUser){
