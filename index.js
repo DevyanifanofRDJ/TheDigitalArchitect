@@ -60,6 +60,14 @@ const rateCheck=rateLimit({
     }
 });
 
+const forgotPasswordRateCheck=rateLimit({
+    windowMs:10*60*1000,
+    max:3,
+    handler: (req, res) => {
+    res.status(429).send("Too many requests. Please try again later.");
+  }
+});
+
 const preventCache=(req,resp,next)=>{
     resp.set('Cache-Control','no-store,no-cache,must-revalidate,private');
     resp.set('Pragma','no-cache');
@@ -81,7 +89,7 @@ app.get('/log',preventCache,(req,resp)=>{
     resp.sendFile(absPathHtml+'/login.html');
 });
 
-app.post('/login',preventCache,async (req,resp)=>{
+app.post('/login',rateCheck,preventCache,async (req,resp)=>{
     const email=sanitize(req.body.email);
     const password=sanitize(req.body.password);
     if(typeof email!='string'||typeof password!='string'){
@@ -115,7 +123,7 @@ app.post('/signup',rateCheck,preventCache,async (req,resp)=>{
     }
     const existingUser=await userModel.findOne({email});
     if(existingUser){
-        return resp.sendFile(absPathHtml+'/login.html');
+        return resp.redirect('/log');
     }
     const salt=await bcrypt.genSalt(8);
     const hasedPass=await bcrypt.hash(password,salt);
@@ -155,17 +163,23 @@ app.get('/otp-verify',preventCache,(req,resp)=>{
 
 app.post('/verifyOtp',rateCheck,preventCache,async (req,resp)=>{
     if(!req.cookies.temp_email){
-        return resp.send("OTP Expired, Try Again!");
+         return resp.status(400).json({
+            msg:"OTP expired. Please request a new one."
+        });
     }
     const {otp}=req.body;
     const email=req.cookies.temp_email;
     const data=await client.get(`tempUser:${email}`);
     if(!data){
-        return resp.send("Try Again!");
+        return resp.status(400).json({
+            msg:"OTP expired or invalid. Please resend."
+        });
     }
     const user=JSON.parse(data);
     if(otp!=user.otp){
-        return resp.send("OTP does not Match!");
+        return resp.status(400).json({
+            msg:"OTP expired. Please request a new one."
+        });
     }
     const newUser=await userModel.create({
         name:user.name,
@@ -275,14 +289,14 @@ app.get('/forgotPassword',preventCache,(req,resp)=>{
     resp.sendFile(absPathHtml+'/forgotPassword.html');
 });
 
-app.post('/forgotPassword',preventCache,rateCheck,async (req,resp)=>{
+app.post('/forgotPassword',preventCache,forgotPasswordRateCheck,async (req,resp)=>{
     const email=sanitize(req.body.email);
     if(typeof email!='string'){
         return resp.send("Invalid Input");
     }
     const user=await userModel.findOne({email});
     if(!user){
-        return resp.send("User Does not exists!");
+        return resp.status(400).send("User does not exist!");
     }
     const resetToken=jwt.sign({id:user._id},process.env.SECRET_KEY,{expiresIn:"15m"});
     const baseUrl=process.env.BASE_URL;
