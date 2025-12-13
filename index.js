@@ -315,8 +315,10 @@ app.post('/forgotPassword',preventCache,forgotPasswordRateCheck,async (req,resp)
         html:forgotPasswordMailContent(newLink)
     };
     transporter.sendMail(mailOption,(error,info)=>{
-        if(error)
+        if(error){
+            console.error(error);
             return resp.send("Mail not sent");
+        }
         else
             return resp.redirect('/checkMail');
     });
