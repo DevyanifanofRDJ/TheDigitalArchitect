@@ -317,6 +317,7 @@ app.post('/forgotPassword',preventCache,forgotPasswordRateCheck,async (req,resp)
     transporter.sendMail(mailOption,(error,info)=>{
         if(error){
             console.error(error);
+            console.log(error);
             return resp.send("Mail not sent");
         }
         else
