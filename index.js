@@ -13,6 +13,8 @@ import sanitize from 'mongo-sanitize';
 import messageModel from './model/messageModel.js';
 import forgotPasswordMailContent from './utils/forgotPasswordMailContent.js';
 import nodemailer from 'nodemailer';
+import passport from 'passport';
+import { Strategy as googleStrategy } from 'passport-google-oauth20';
 
 const app=express();
 app.set('trust proxy',1);
@@ -21,9 +23,7 @@ const absPathHtml=path.resolve('views');
 const url=process.env.MONGO_URL;
 const SECRET_KEY=process.env.SECRET_KEY;
 const transporter=nodemailer.createTransport({
-    host:"smtp.gmail.com",
-    port:587,
-    secure:false,
+    service:'gmail',
     auth:{
         user:process.env.EMAIL,
         pass:process.env.EMAIL_PASS
@@ -38,6 +38,37 @@ app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(absPathPublic));
+app.use(passport.initialize());
+
+passport.use(
+    new googleStrategy({
+        clientID:process.env.GOOGLE_CLIENT_ID,
+        clientSecret:process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL:process.env.CALLBACK_URL
+    },async (accessToken,refreshToken,profile,done)=>{
+        try{
+            const email=profile.emails[0].value;
+            let user=await userModel.findOne({email});
+            if(user){
+                if(!user.googleId){
+                    user.googleId=profile.id;
+                    await user.save();
+                }
+            }
+            else{
+                user=await userModel.create({
+                    name:profile.displayName,
+                    email:email,
+                    googleId:profile.id
+                });
+            }
+            return done(null,user);
+        }catch(error){
+            return done(error,null);
+        }
+    }
+    )
+);
 
 const verifyToken=(req,resp,next)=>{
     const authHeader=req.headers["authorization"];
@@ -99,6 +130,28 @@ const verifyAdmin=(req,resp,next)=>{
     resp.redirect('/');
 };
 
+app.get('/auth/google',preventCache,rateCheck,passport.authenticate('google',{
+        scope:['profile','email'],
+        session:false
+    })
+);
+
+app.get('/auth/google/callback',preventCache,passport.authenticate('google',{
+        failureRedirect:'/log',
+        session:false
+    }),(req,resp)=>{
+        const user=req.user;
+        const token=jwt.sign({id:user.id,email:user.email,role:user.role},process.env.SECRET_KEY,{expiresIn:'2h'});
+        resp.cookie('token',token,{
+            httpOnly:true,
+            secure:process.env.NODE_ENV==='production',
+            sameSite:"lax",
+            maxAge:2*60*60*1000
+        });
+        resp.redirect('/');
+    }
+);
+
 app.get('/',verifyToken,preventCache,(req,resp)=>{
     resp.sendFile(absPathHtml+'/home.html');
 });
@@ -122,6 +175,7 @@ app.post('/login',rateCheck,preventCache,async (req,resp)=>{
     const token=jwt.sign({id:user._id,email:user.email,role:user.role},SECRET_KEY,{expiresIn:"2h"});
     resp.cookie("token",token,{
         httpOnly:true,
+        secure:process.env.NODE_ENV==='production',
         sameSite:"lax",
         maxAge:2*60*60*1000
     });
@@ -150,6 +204,7 @@ app.post('/signup',otpRateCheck,preventCache,async (req,resp)=>{
     await client.setEx(`tempUser:${email}`,1800,user);
     resp.cookie('temp_email',email,{
         httpOnly:true,
+        secure:process.env.NODE_ENV==='production',
         sameSite:"lax",
         maxAge:10*60*1000
     });
@@ -202,6 +257,7 @@ app.post('/verifyOtp',rateCheck,preventCache,async (req,resp)=>{
     const token=jwt.sign({id:newUser._id,email:newUser.email,role:newUser.role},SECRET_KEY,{expiresIn:"2h"});
     resp.cookie("token",token,{
         httpOnly:true,
+        secure:process.env.NODE_ENV==='production',
         sameSite:"lax",
         maxAge:2*60*60*1000
     });
@@ -249,6 +305,7 @@ app.get('/resume',verifyToken,preventCache,(req,resp)=>{
 app.get('/logout',verifyToken,preventCache,(req,resp)=>{
     resp.clearCookie("token",{
         httpOnly:true,
+        secure:process.env.NODE_ENV==='production',
         sameSite:"lax",
         maxAge:2*60*60*1000
     });
@@ -315,11 +372,8 @@ app.post('/forgotPassword',preventCache,forgotPasswordRateCheck,async (req,resp)
         html:forgotPasswordMailContent(newLink)
     };
     transporter.sendMail(mailOption,(error,info)=>{
-        if(error){
-            console.error(error.message);
-            console.log(error.message);
+        if(error)
             return resp.send("Mail not sent");
-        }
         else
             return resp.redirect('/checkMail');
     });
@@ -371,7 +425,7 @@ app.post('/resetPassword',preventCache,rateCheck,async (req,resp)=>{
     }
 });
 
-app.get('/passwordUpdated',(req,resp)=>{
+app.get('/passwordUpdated',preventCache,(req,resp)=>{
     resp.sendFile(absPathHtml+'/passwordUpdated.html');
 });
 

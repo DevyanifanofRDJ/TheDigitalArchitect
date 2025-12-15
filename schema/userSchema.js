@@ -12,8 +12,13 @@ const userSchema=mongoose.Schema({
     },
     password:{
         type:String,
-        required:true,
+        required:false,
         select:false
+    },
+    googleId:{
+        type:String,
+        unique:true,
+        sparse:true
     },
     role:{
         type:String,
